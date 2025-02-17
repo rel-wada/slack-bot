@@ -1,0 +1,47 @@
+name: "Slack Attendance Bot"
+
+on:
+  schedule:
+    - cron: '0 9 * * *'  # 毎朝9時（UTCなので日本時間+9h → JST18時）
+
+  workflow_dispatch:  # 手動実行できるようにする
+
+jobs:
+  post_attendance:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Send Slack message
+        run: |
+          curl -X POST "https://slack.com/api/chat.postMessage" \
+          -H "Authorization: Bearer ${{ secrets.SLACK_BOT_TOKEN }}" \
+          -H "Content-Type: application/json" \
+          --data '{
+            "channel": "${{ secrets.SLACK_CHANNEL_ID }}",
+            "text": "おはようございます！ 出勤・退勤のボタンを押してください。",
+            "blocks": [
+              {
+                "type": "section",
+                "text": { "type": "mrkdwn", "text": "おはようございます！ 出勤・退勤のボタンを押してください。" }
+              },
+              {
+                "type": "actions",
+                "elements": [
+                  {
+                    "type": "button",
+                    "text": { "type": "plain_text", "text": "🚀 出勤" },
+                    "style": "primary",
+                    "action_id": "attendance_checkin",
+                    "value": "checkin"
+                  },
+                  {
+                    "type": "button",
+                    "text": { "type": "plain_text", "text": "🏁 退勤" },
+                    "style": "danger",
+                    "action_id": "attendance_checkout",
+                    "value": "checkout"
+                  }
+                ]
+              }
+            ]
+          }'
